@@ -7,6 +7,7 @@ interface CartItem {
   name: string;
   quantity: number;
   priceTaxIncluded: number;
+  priceTaxExcluded: number;
   category?: string;
 }
 

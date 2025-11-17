@@ -1,28 +1,35 @@
 'use client';
 
-import { useProducts } from './hooks/useProducts';
+import { useProducts, Product } from './hooks/useProducts';
 import { useCart } from './hooks/useCart';
 import { ShoppingCart, Package, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 
-interface CartItem {
-  productId: number;
-  name: string;
-  quantity: number;
-  priceTaxExcluded: number;
-  priceTaxIncluded: number;
-  category?: string;
-}
-
 export default function Home() {
   const { data: products, isLoading, error } = useProducts();
   const { addToCart } = useCart();
-  const [addedToCart, setAddedToCart] = useState<number | null>(null);
+  const [addedToCart, setAddedToCart] = useState<Record<number, boolean>>({});
 
-  const handleAddToCart = (product: CartItem) => {
-    addToCart(product);
-    setAddedToCart(product.productId);
-    setTimeout(() => setAddedToCart(null), 2000);
+  const handleAddToCart = (product: Product) => {
+    // Convertir Product vers CartItem pour le panier
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      quantity: 1,
+      priceTaxExcluded: product.priceTaxExcluded,
+      priceTaxIncluded: product.priceTaxIncluded,
+      category: product.category,
+    });
+
+    // Marquer comme ajouté
+    setAddedToCart(prev => ({ ...prev, [product.id]: true }));
+    setTimeout(() => {
+      setAddedToCart(prev => {
+        const next = { ...prev };
+        delete next[product.id];
+        return next;
+      });
+    }, 2000);
   };
 
   // État de chargement
@@ -66,7 +73,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12 mb-8">
+      <div className="bg-linear-to-r from-blue-600 to-blue-800 text-white py-12 mb-8">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Découvrez nos produits</h1>
           <p className="text-xl text-blue-100">Les meilleurs produits au meilleur prix</p>
@@ -82,13 +89,13 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product: CartItem) => (
+          {products.map((product: Product) => (
             <div
-              key={product.productId}
+              key={product.id}
               className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col"
             >
               {/* Image placeholder */}
-              <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+              <div className="h-48 bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                 <Package className="h-20 w-20 text-gray-400" />
               </div>
 
@@ -100,13 +107,13 @@ export default function Home() {
                       {product.category}
                     </span>
                   )}
-                  
+
                   <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
                     {product.name}
                   </h3>
-                  
+
                   <p className="text-sm text-gray-500 mb-3">
-                    Réf: {product.productId}
+                    Réf: {product.id}
                   </p>
 
                   <div className="mb-4">
@@ -125,15 +132,15 @@ export default function Home() {
                 {/* Add to Cart Button */}
                 <button
                   onClick={() => handleAddToCart(product)}
-                  disabled={addedToCart === product.productId}
+                  disabled={!!addedToCart[product.id]}
                   className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                    addedToCart === product.productId
+                    addedToCart[product.id]
                       ? 'bg-green-500 text-white'
                       : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
                   }`}
                 >
                   <ShoppingCart className="h-5 w-5" />
-                  {addedToCart === product.productId ? 'Ajouté !' : 'Ajouter au panier'}
+                  {addedToCart[product.id] ? 'Ajouté !' : 'Ajouter au panier'}
                 </button>
               </div>
             </div>
